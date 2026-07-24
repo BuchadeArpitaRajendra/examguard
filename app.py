@@ -1,3 +1,9 @@
+"""
+ExamGuard - Online Exam Monitoring Platform
+Copyright (c) 2026 BuchadeArpitaRajendra
+Licensed under MIT License - see LICENSE file for details
+"""
+
 from flask import Flask
 
 # Create Flask application instance
