@@ -324,3 +324,77 @@ body {
 .btn-submit.loading .btn-text {
     display: none;
 }
+
+/* ===== LOGIN SPECIFIC STYLES ===== */
+.login-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 15px 0;
+    font-size: 14px;
+}
+
+.login-options label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #666;
+    cursor: pointer;
+}
+
+.login-options label input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.login-options .forgot-password {
+    color: #667eea;
+    text-decoration: none;
+}
+
+.login-options .forgot-password:hover {
+    text-decoration: underline;
+}
+
+/* ===== REGISTER SUCCESS ===== */
+.success-animation {
+    text-align: center;
+    padding: 20px 0;
+}
+
+.success-animation .checkmark {
+    font-size: 60px;
+    color: #27ae60;
+    animation: bounce 0.8s ease;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+}
+
+/* ===== FORM DIVIDER ===== */
+.form-divider {
+    display: flex;
+    align-items: center;
+    margin: 25px 0;
+    color: #aaa;
+    font-size: 13px;
+}
+
+.form-divider::before,
+.form-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #e0e0e0;
+}
+
+.form-divider::before {
+    margin-right: 15px;
+}
+
+.form-divider::after {
+    margin-left: 15px;
+}
