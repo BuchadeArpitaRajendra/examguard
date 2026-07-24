@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ExamGuard - Candidate Registration</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">📝</div>
+            <h1>Create Account</h1>
+            <p>Register for your exam session</p>
+        </div>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            <span>{{ message }}</span>
+                            <button class="close-btn" onclick="this.parentElement.remove()">&times;</button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Registration Form -->
+        <form method="POST" action="{{ url_for('register') }}" id="registerForm" novalidate>
+            <!-- Candidate ID -->
+            <div class="form-group">
+                <label for="candidate_id">
+                    Candidate ID <span class="required">*</span>
+                </label>
+                <div class="input-group">
+                    <span class="icon"><i class="fas fa-id-card"></i></span>
+                    <input 
+                        type="text" 
+                        id="candidate_id" 
+                        name="candidate_id" 
+                        placeholder="Enter your candidate ID (e.g., C001)" 
+                        required
+                        pattern="[A-Za-z0-9]{3,10}"
+                        title="Candidate ID must be 3-10 alphanumeric characters"
+                    >
+                </div>
+                <small style="color: #888; font-size: 12px;">3-10 alphanumeric characters</small>
+            </div>
+
+            <!-- Name -->
+            <div class="form-group">
+                <label for="name">
+                    Full Name <span class="required">*</span>
+                </label>
+                <div class="input-group">
+                    <span class="icon"><i class="fas fa-user"></i></span>
+                    <input 
+                        type="text" 
+                        id="name" 
+                        name="name" 
+                        placeholder="Enter your full name" 
+                        required
+                        minlength="2"
+                        title="Name must be at least 2 characters"
+                    >
+                </div>
+            </div>
+
+            <!-- Email -->
+            <div class="form-group">
+                <label for="email">
+                    Email Address <span class="required">*</span>
+                </label>
+                <div class="input-group">
+                    <span class="icon"><i class="fas fa-envelope"></i></span>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        name="email" 
+                        placeholder="Enter your email address" 
+                        required
+                        title="Please enter a valid email address"
+                    >
+                </div>
+            </div>
+
+            <!-- Password -->
+            <div class="form-group">
+                <label for="password">
+                    Password <span class="required">*</span>
+                </label>
+                <div class="input-group">
+                    <span class="icon"><i class="fas fa-lock"></i></span>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        placeholder="Create a strong password" 
+                        required
+                        minlength="8"
+                        title="Password must be at least 8 characters"
+                    >
+                </div>
+                <div class="password-strength">
+                    <div class="strength-bar" id="strengthBar"></div>
+                </div>
+                <span class="strength-text" id="strengthText">Enter a password</span>
+            </div>
+
+            <!-- Confirm Password -->
+            <div class="form-group">
+                <label for="confirm_password">
+                    Confirm Password <span class="required">*</span>
+                </label>
+                <div class="input-group">
+                    <span class="icon"><i class="fas fa-check-circle"></i></span>
+                    <input 
+                        type="password" 
+                        id="confirm_password" 
+                        name="confirm_password" 
+                        placeholder="Confirm your password" 
+                        required
+                    >
+                </div>
+                <span id="passwordMatch" style="font-size: 12px; margin-top: 5px; display: block;"></span>
+            </div>
+
+            <!-- Terms and Conditions -->
+            <div class="terms">
+                <input type="checkbox" id="terms" name="terms" required>
+                <label for="terms">
+                    I agree to the <a href="#" onclick="alert('Terms and conditions will be displayed here.'); return false;">Terms & Conditions</a> and <a href="#" onclick="alert('Privacy policy will be displayed here.'); return false;">Privacy Policy</a>
+                </label>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn-submit" id="submitBtn">
+                <span class="btn-text">Create Account</span>
+                <div class="spinner"></div>
+            </button>
+        </form>
+
+        <!-- Login Link -->
+        <div class="login-link">
+            Already have an account? <a href="#">Login here</a>
+        </div>
+    </div>
+
+    <!-- JavaScript for validation and interactivity -->
+    <script>
+        // ===== PASSWORD STRENGTH METER =====
+        const passwordInput = document.getElementById('password');
+        const strengthBar = document.getElementById('strengthBar');
+        const strengthText = document.getElementById('strengthText');
+
+        passwordInput.addEventListener('input', function() {
+            const password = this.value;
+            let strength = 0;
+            let message = '';
+
+            if (password.length === 0) {
+                strengthBar.style.width = '0%';
+                strengthBar.style.background = '#e0e0e0';
+                strengthText.textContent = 'Enter a password';
+                strengthText.style.color = '#888';
+                return;
+            }
+
+            // Check password strength
+            if (password.length >= 8) strength++;
+            if (password.length >= 12) strength++;
+            if (/[a-z]/.test(password)) strength++;
+            if (/[A-Z]/.test(password)) strength++;
+            if (/[0-9]/.test(password)) strength++;
+            if (/[^a-zA-Z0-9]/.test(password)) strength++;
+
+            // Determine strength level
+            const percentage = Math.min((strength / 6) * 100, 100);
+            strengthBar.style.width = percentage + '%';
+
+            if (percentage < 20) {
+                strengthBar.style.background = '#e74c3c';
+                message = 'Weak';
+                strengthText.style.color = '#e74c3c';
+            } else if (percentage < 40) {
+                strengthBar.style.background = '#f39c12';
+                message = 'Fair';
+                strengthText.style.color = '#f39c12';
+            } else if (percentage < 60) {
+                strengthBar.style.background = '#f1c40f';
+                message = 'Good';
+                strengthText.style.color = '#f1c40f';
+            } else if (percentage < 80) {
+                strengthBar.style.background = '#2ecc71';
+                message = 'Strong';
+                strengthText.style.color = '#2ecc71';
+            } else {
+                strengthBar.style.background = '#27ae60';
+                message = 'Very Strong';
+                strengthText.style.color = '#27ae60';
+            }
+
+            strengthText.textContent = `Password Strength: ${message}`;
+        });
+
+        // ===== CONFIRM PASSWORD VALIDATION =====
+        const confirmPasswordInput = document.getElementById('confirm_password');
+        const passwordMatch = document.getElementById('passwordMatch');
+
+        function validatePasswordMatch() {
+            const password = passwordInput.value;
+            const confirm = confirmPasswordInput.value;
+
+            if (confirm.length === 0) {
+                passwordMatch.textContent = '';
+                passwordMatch.style.color = '#888';
+                return;
+            }
+
+            if (password === confirm) {
+                passwordMatch.textContent = '✅ Passwords match!';
+                passwordMatch.style.color = '#27ae60';
+            } else {
+                passwordMatch.textContent = '❌ Passwords do not match!';
+                passwordMatch.style.color = '#e74c3c';
+            }
+        }
+
+        confirmPasswordInput.addEventListener('input', validatePasswordMatch);
+        passwordInput.addEventListener('input', validatePasswordMatch);
+
+        // ===== FORM VALIDATION BEFORE SUBMIT =====
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            const password = passwordInput.value;
+            const confirm = confirmPasswordInput.value;
+            const terms = document.getElementById('terms');
+            const submitBtn = document.getElementById('submitBtn');
+
+            // Check if passwords match
+            if (password !== confirm) {
+                e.preventDefault();
+                alert('Passwords do not match! Please make sure both passwords are the same.');
+                return;
+            }
+
+            // Check password length
+            if (password.length < 8) {
+                e.preventDefault();
+                alert('Password must be at least 8 characters long!');
+                return;
+            }
+
+            // Check terms agreement
+            if (!terms.checked) {
+                e.preventDefault();
+                alert('Please agree to the Terms & Conditions to register.');
+                return;
+            }
+
+            // Show loading state
+            submitBtn.classList.add('loading');
+            submitBtn.disabled = true;
+        });
+
+        // ===== AUTO-GENERATE CANDIDATE ID =====
+        // This can be enabled/disabled as needed
+        // For now, we'll keep it as optional
+
+        // ===== CLOSE ALERT MESSAGES =====
+        document.querySelectorAll('.alert .close-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                this.parentElement.remove();
+            });
+        });
+
+        // ===== AUTO-DISMISS SUCCESS MESSAGES =====
+        setTimeout(() => {
+            document.querySelectorAll('.alert-success').forEach(alert => {
+                setTimeout(() => {
+                    alert.style.opacity = '0';
+                    alert.style.transition = 'opacity 0.5s';
+                    setTimeout(() => alert.remove(), 500);
+                }, 3000);
+            });
+        }, 1000);
+    </script>
+</body>
+</html>
