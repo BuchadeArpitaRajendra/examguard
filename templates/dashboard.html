@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard - ExamGuard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Navigation -->
+        <nav class="navbar">
+            <div class="nav-brand">📝 ExamGuard</div>
+            <div class="nav-links">
+                <span>Welcome, {{ candidate.name }}</span>
+                <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="dashboard-content">
+            <!-- Welcome Section -->
+            <div class="welcome-section">
+                <h1>Welcome, {{ candidate.name }}! 👋</h1>
+                <p>You are logged in as {{ candidate.email }}</p>
+            </div>
+
+            <!-- Session Controls -->
+            <div class="session-controls">
+                <h2>📝 Exam Session</h2>
+                <div class="session-status">
+                    {% if active_session %}
+                        <p>Current Status: <span class="status-{{ active_session.status }}">{{ active_session.status }}</span></p>
+                        <p>Started: {{ active_session.start_time }}</p>
+                    {% else %}
+                        <p>No active session. Start your exam below.</p>
+                    {% endif %}
+                </div>
+                <div class="session-buttons">
+                    {% if not active_session %}
+                        <form method="POST" action="{{ url_for('start_exam') }}" style="display: inline;">
+                            <button type="submit" class="btn-session start">
+                                <i class="fas fa-play"></i> Start Exam
+                            </button>
+                        </form>
+                    {% else %}
+                        {% if active_session.status == 'active' %}
+                            <form method="POST" action="{{ url_for('pause_exam') }}" style="display: inline;">
+                                <button type="submit" class="btn-session pause">
+                                    <i class="fas fa-pause"></i> Pause
+                                </button>
+                            </form>
+                            <form method="POST" action="{{ url_for('end_exam') }}" style="display: inline;">
+                                <button type="submit" class="btn-session end" onclick="return confirm('Are you sure you want to end this exam session?')">
+                                    <i class="fas fa-stop"></i> End Exam
+                                </button>
+                            </form>
+                        {% elif active_session.status == 'paused' %}
+                            <form method="POST" action="{{ url_for('resume_exam') }}" style="display: inline;">
+                                <button type="submit" class="btn-session resume">
+                                    <i class="fas fa-play"></i> Resume
+                                </button>
+                            </form>
+                            <form method="POST" action="{{ url_for('end_exam') }}" style="display: inline;">
+                                <button type="submit" class="btn-session end" onclick="return confirm('Are you sure you want to end this exam session?')">
+                                    <i class="fas fa-stop"></i> End Exam
+                                </button>
+                            </form>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Profile Card -->
+            <div class="profile-card">
+                <h2>Profile Information</h2>
+                <div class="profile-details">
+                    <p><strong>ID:</strong> {{ candidate.candidate_id }}</p>
+                    <p><strong>Name:</strong> {{ candidate.name }}</p>
+                    <p><strong>Email:</strong> {{ candidate.email }}</p>
+                    <p><strong>Member Since:</strong> {{ candidate.created_at }}</p>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon">📊</div>
+        <div class="stat-number">{{ total_sessions|default(0) }}</div>
+        <div class="stat-label">Total Sessions</div>
+    </div>
+    <div class="stat-card active">
+        <div class="stat-icon">🟢</div>
+        <div class="stat-number">{{ active_sessions|default(0) }}</div>
+        <div class="stat-label">Active Sessions</div>
+    </div>
+    <div class="stat-card completed">
+        <div class="stat-icon">✅</div>
+        <div class="stat-number">{{ completed_sessions|default(0) }}</div>
+        <div class="stat-label">Completed</div>
+    </div>
+</div>
+
+            <!-- Session History Section -->
+<div class="session-history">
+    <h2>📋 Session History</h2>
+    {% if sessions and sessions|length > 0 %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Session ID</th>
+                    <th>Start Time</th>
+                    <th>End Time</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sess in sessions %}
+                <tr>
+                    <td>#{{ sess.session_id }}</td>
+                    <td>{{ sess.start_time }}</td>
+                    <td>{{ sess.end_time or 'In Progress' }}</td>
+                    <td>
+                        <span class="status-{{ sess.status }}">
+                            {{ sess.status }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="no-sessions">📭 No sessions found. Start your first exam!</p>
+    {% endif %}
+</div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <a href="#" class="action-btn primary">🖥️ Start New Exam</a>
+                <a href="#" class="action-btn secondary">📄 View Reports</a>
+                <a href="#" class="action-btn secondary">⚙️ Profile Settings</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
