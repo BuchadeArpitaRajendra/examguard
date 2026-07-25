@@ -1,14 +1,11 @@
 import sqlite3
+import os
 from init_db import get_db_connection
 
-def check_registered_candidates():
-    """Display all registered candidates"""
+def get_all_candidates():
+    """Get all candidates with photo info"""
     conn = get_db_connection()
     cursor = conn.cursor()
-    
-    print("\n" + "="*60)
-    print("📊 REGISTERED CANDIDATES")
-    print("="*60)
     
     cursor.execute('''
         SELECT 
@@ -22,91 +19,101 @@ def check_registered_candidates():
     ''')
     
     candidates = cursor.fetchall()
+    conn.close()
+    return candidates
+
+def check_registered_candidates():
+    """Display all registered candidates"""
+    candidates = get_all_candidates()
+    
+    print("\n" + "="*80)
+    print("📊 REGISTERED CANDIDATES")
+    print("="*80)
     
     if not candidates:
-        print("❌ No candidates registered yet.")
-    else:
-        print(f"✅ Found {len(candidates)} registered candidates:\n")
-        print(f"{'ID':<5} {'Name':<20} {'Email':<30} {'Registered'}")
-        print("-"*70)
-        
-        for c in candidates:
-            created = c['created_at'][:19] if c['created_at'] else 'N/A'
-            print(f"{c['candidate_id']:<5} {c['name']:<20} {c['email']:<30} {created}")
+        print("❌ No candidates registered yet.\n")
+        return
     
-    conn.close()
+    print(f"✅ Found {len(candidates)} registered candidates:\n")
+    print(f"{'ID':<5} {'Name':<20} {'Email':<30} {'Photo':<25} {'Registered'}")
+    print("-"*90)
+    
+    for c in candidates:
+        created = c['created_at'][:19] if c['created_at'] else 'N/A'
+        
+        # Check photo
+        if c['photo_path']:
+            # Check if file actually exists
+            if os.path.exists(c['photo_path']):
+                photo = f"✅ {os.path.basename(c['photo_path'])}"
+            else:
+                photo = "⚠️ File missing"
+        else:
+            photo = "❌ No photo"
+        
+        print(f"{c['candidate_id']:<5} {c['name']:<20} {c['email']:<30} {photo:<25} {created}")
 
-def check_sessions():
-    """Display all sessions"""
+def check_photo_files():
+    """Check photos in folder vs database"""
+    print("\n" + "="*80)
+    print("📸 PHOTO VERIFICATION")
+    print("="*80)
+    
+    # Get photos from database
+    candidates = get_all_candidates()
+    
+    # Get photos from folder
+    photos_dir = 'static/photos'
+    folder_photos = []
+    if os.path.exists(photos_dir):
+        folder_photos = [f for f in os.listdir(photos_dir) 
+                        if f.endswith(('.jpg', '.jpeg', '.png', '.gif'))]
+    
+    print(f"📁 Photos in folder: {len(folder_photos)}")
+    print(f"📊 Photos in database: {sum(1 for c in candidates if c['photo_path'])}")
+    
+    # Check each candidate
+    print("\n📋 Candidate Photo Status:")
+    print("-"*60)
+    for c in candidates:
+        status = "✅ Has photo" if c['photo_path'] else "❌ No photo"
+        if c['photo_path'] and os.path.exists(c['photo_path']):
+            status = "✅ File exists"
+        elif c['photo_path'] and not os.path.exists(c['photo_path']):
+            status = "⚠️ File missing"
+        print(f"  {c['name']:<20} {status}")
+
+def debug_photo_paths():
+    """Debug: Show raw photo_path values"""
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    print("\n" + "="*60)
-    print("📋 EXAM SESSIONS")
-    print("="*60)
+    print("\n" + "="*80)
+    print("🔍 RAW PHOTO_PATH VALUES")
+    print("="*80)
     
-    cursor.execute('''
-        SELECT 
-            s.session_id,
-            s.candidate_id,
-            c.name as candidate_name,
-            s.start_time,
-            s.end_time,
-            s.status
-        FROM session s
-        JOIN candidate c ON s.candidate_id = c.candidate_id
-        ORDER BY s.start_time DESC
-    ''')
-    
-    sessions = cursor.fetchall()
-    
-    if not sessions:
-        print("❌ No sessions found.")
-    else:
-        print(f"✅ Found {len(sessions)} sessions:\n")
-        print(f"{'Session':<8} {'Candidate':<20} {'Status':<10} {'Start Time'}")
-        print("-"*70)
-        
-        for s in sessions:
-            start = s['start_time'][:19] if s['start_time'] else 'N/A'
-            print(f"{s['session_id']:<8} {s['candidate_name']:<20} {s['status']:<10} {start}")
-    
-    conn.close()
-
-def get_candidate_details(email):
-    """Get specific candidate details"""
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    cursor.execute('''
-        SELECT 
-            candidate_id,
-            name,
-            email,
-            photo_path,
-            created_at
-        FROM candidate
-        WHERE email = ?
-    ''', (email,))
-    
-    candidate = cursor.fetchone()
+    cursor.execute('SELECT candidate_id, name, photo_path FROM candidate')
+    candidates = cursor.fetchall()
     conn.close()
     
-    if candidate:
-        print(f"\n👤 Candidate Details for {email}:")
-        print(f"   ID: {candidate['candidate_id']}")
-        print(f"   Name: {candidate['name']}")
-        print(f"   Email: {candidate['email']}")
-        print(f"   Photo: {candidate['photo_path'] or 'No photo'}")
-        print(f"   Registered: {candidate['created_at']}")
-    else:
-        print(f"❌ No candidate found with email: {email}")
-    
-    return candidate
+    for c in candidates:
+        print(f"  ID: {c['candidate_id']}")
+        print(f"  Name: {c['name']}")
+        print(f"  Photo Path: '{c['photo_path']}'")
+        print(f"  Exists: {os.path.exists(c['photo_path']) if c['photo_path'] else False}")
+        print("-"*40)
 
 if __name__ == '__main__':
     check_registered_candidates()
-    check_sessions()
+    check_photo_files()
+    debug_photo_paths()
     
-    # Check specific candidate (optional)
-    # get_candidate_details('john@example.com')
+    print("\n" + "="*80)
+    print("💡 TROUBLESHOOTING")
+    print("="*80)
+    print("If photo is not showing:")
+    print("1. Make sure you captured a photo during registration")
+    print("2. Check if photo was saved: ls static/photos/")
+    print("3. Check database: sqlite3 instance/examguard.db")
+    print("   SELECT candidate_id, name, photo_path FROM candidate;")
+    print("4. Run: python init_db.py to reset database")
