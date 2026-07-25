@@ -5,12 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ExamGuard - Candidate Registration</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <div class="container">
-        <!-- Header -->
         <div class="header">
             <div class="logo">📝</div>
             <h1>Create Account</h1>
@@ -33,26 +31,6 @@
 
         <!-- Registration Form -->
         <form method="POST" action="{{ url_for('register') }}" id="registerForm" novalidate>
-            <!-- Candidate ID -->
-            <div class="form-group">
-                <label for="candidate_id">
-                    Candidate ID <span class="required">*</span>
-                </label>
-                <div class="input-group">
-                    <span class="icon"><i class="fas fa-id-card"></i></span>
-                    <input 
-                        type="text" 
-                        id="candidate_id" 
-                        name="candidate_id" 
-                        placeholder="Enter your candidate ID (e.g., C001)" 
-                        required
-                        pattern="[A-Za-z0-9]{3,10}"
-                        title="Candidate ID must be 3-10 alphanumeric characters"
-                    >
-                </div>
-                <small style="color: #888; font-size: 12px;">3-10 alphanumeric characters</small>
-            </div>
-
             <!-- Name -->
             <div class="form-group">
                 <label for="name">
@@ -65,11 +43,13 @@
                         id="name" 
                         name="name" 
                         placeholder="Enter your full name" 
+                        value="{{ form_data.name if form_data else '' }}"
                         required
                         minlength="2"
                         title="Name must be at least 2 characters"
                     >
                 </div>
+                <small style="color: #888; font-size: 12px;">Minimum 2 characters</small>
             </div>
 
             <!-- Email -->
@@ -84,9 +64,40 @@
                         id="email" 
                         name="email" 
                         placeholder="Enter your email address" 
+                        value="{{ form_data.email if form_data else '' }}"
                         required
                         title="Please enter a valid email address"
                     >
+                </div>
+                <small style="color: #888; font-size: 12px;">Must be a valid email format (e.g., name@example.com)</small>
+            </div>
+            
+            <!-- Photo Capture Section -->
+            <div class="form-group">
+                <label>Profile Photo <span class="required">*</span></label>
+                <div class="photo-capture-section">
+                    <div class="video-container">
+                        <video id="video" autoplay playsinline></video>
+                        <canvas id="canvas" style="display:none;"></canvas>
+                        <div id="photoPreview" style="display:none;">
+                            <img id="capturedPhoto" alt="Captured Photo">
+                        </div>
+                    </div>
+                    <div class="photo-controls">
+                        <button type="button" id="startCameraBtn" class="btn-camera">
+                            <i class="fas fa-camera"></i> Start Camera
+                        </button>
+                        <button type="button" id="captureBtn" class="btn-capture" style="display:none;">
+                            <i class="fas fa-camera-retro"></i> Capture Photo
+                        </button>
+                        <button type="button" id="retakeBtn" class="btn-retake" style="display:none;">
+                            <i class="fas fa-redo"></i> Retake
+                        </button>
+                    </div>
+                    <input type="hidden" id="photo_data" name="photo_data" value="">
+                    <small style="color: #888; font-size: 12px; display: block; margin-top: 10px;">
+                        📸 Please allow camera access when prompted. Your photo will be used for identity verification during exams.
+                    </small>
                 </div>
             </div>
 
@@ -104,13 +115,16 @@
                         placeholder="Create a strong password" 
                         required
                         minlength="8"
-                        title="Password must be at least 8 characters"
+                        title="Password must be at least 8 characters with uppercase, lowercase and number"
                     >
                 </div>
                 <div class="password-strength">
                     <div class="strength-bar" id="strengthBar"></div>
                 </div>
                 <span class="strength-text" id="strengthText">Enter a password</span>
+                <small style="color: #888; font-size: 12px; display: block; margin-top: 5px;">
+                    Requirements: 8+ chars, uppercase, lowercase, and number
+                </small>
             </div>
 
             <!-- Confirm Password -->
@@ -148,11 +162,10 @@
 
         <!-- Login Link -->
         <div class="login-link">
-            Already have an account? <a href="#">Login here</a>
+            Already have an account? <a href="{{ url_for('login') }}">Login here</a>
         </div>
     </div>
 
-    <!-- JavaScript for validation and interactivity -->
     <script>
         // ===== PASSWORD STRENGTH METER =====
         const passwordInput = document.getElementById('password');
@@ -172,7 +185,7 @@
                 return;
             }
 
-            // Check password strength
+            // Check password requirements
             if (password.length >= 8) strength++;
             if (password.length >= 12) strength++;
             if (/[a-z]/.test(password)) strength++;
@@ -180,7 +193,6 @@
             if (/[0-9]/.test(password)) strength++;
             if (/[^a-zA-Z0-9]/.test(password)) strength++;
 
-            // Determine strength level
             const percentage = Math.min((strength / 6) * 100, 100);
             strengthBar.style.width = percentage + '%';
 
@@ -240,7 +252,23 @@
             const password = passwordInput.value;
             const confirm = confirmPasswordInput.value;
             const terms = document.getElementById('terms');
+            const name = document.getElementById('name').value.trim();
+            const email = document.getElementById('email').value.trim();
             const submitBtn = document.getElementById('submitBtn');
+
+            // Check if name is empty
+            if (!name) {
+                e.preventDefault();
+                alert('Please enter your full name.');
+                return;
+            }
+
+            // Check if email is empty
+            if (!email) {
+                e.preventDefault();
+                alert('Please enter your email address.');
+                return;
+            }
 
             // Check if passwords match
             if (password !== confirm) {
@@ -268,10 +296,6 @@
             submitBtn.disabled = true;
         });
 
-        // ===== AUTO-GENERATE CANDIDATE ID =====
-        // This can be enabled/disabled as needed
-        // For now, we'll keep it as optional
-
         // ===== CLOSE ALERT MESSAGES =====
         document.querySelectorAll('.alert .close-btn').forEach(btn => {
             btn.addEventListener('click', function() {
@@ -289,6 +313,119 @@
                 }, 3000);
             });
         }, 1000);
+
+        // ===== PHOTO CAPTURE FUNCTIONALITY =====
+const video = document.getElementById('video');
+const canvas = document.getElementById('canvas');
+const photoPreview = document.getElementById('photoPreview');
+const capturedPhoto = document.getElementById('capturedPhoto');
+const photoDataInput = document.getElementById('photo_data');
+
+const startCameraBtn = document.getElementById('startCameraBtn');
+const captureBtn = document.getElementById('captureBtn');
+const retakeBtn = document.getElementById('retakeBtn');
+
+let stream = null;
+let photoCaptured = false;
+
+// Start Camera
+startCameraBtn.addEventListener('click', async function() {
+    try {
+        stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+                width: { ideal: 640 },
+                height: { ideal: 480 }
+            },
+            audio: false
+        });
+        
+        video.srcObject = stream;
+        await video.play();
+        
+        // Show video, hide preview
+        video.style.display = 'block';
+        photoPreview.style.display = 'none';
+        
+        // Update buttons
+        startCameraBtn.style.display = 'none';
+        captureBtn.style.display = 'inline-flex';
+        retakeBtn.style.display = 'none';
+        
+        this.textContent = '📹 Camera Started';
+        this.disabled = true;
+        
+    } catch (error) {
+        console.error('Camera error:', error);
+        alert('⚠️ Unable to access camera. Please allow camera access and try again.');
+    }
+});
+
+// Capture Photo
+captureBtn.addEventListener('click', function() {
+    if (!stream) {
+        alert('Please start the camera first.');
+        return;
+    }
+    
+    // Draw video frame to canvas
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const context = canvas.getContext('2d');
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    // Convert to image data
+    const photoData = canvas.toDataURL('image/jpeg', 0.9);
+    
+    // Show preview
+    capturedPhoto.src = photoData;
+    video.style.display = 'none';
+    photoPreview.style.display = 'block';
+    
+    // Store data for submission
+    photoDataInput.value = photoData;
+    photoCaptured = true;
+    
+    // Update buttons
+    captureBtn.style.display = 'none';
+    retakeBtn.style.display = 'inline-flex';
+    
+    // Stop camera
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+    }
+    
+    startCameraBtn.textContent = '📹 Start Camera';
+    startCameraBtn.disabled = false;
+});
+
+// Retake Photo
+retakeBtn.addEventListener('click', function() {
+    // Clear photo data
+    photoDataInput.value = '';
+    photoCaptured = false;
+    
+    // Reset display
+    photoPreview.style.display = 'none';
+    video.style.display = 'block';
+    
+    // Restart camera
+    startCameraBtn.click();
+    
+    // Update buttons
+    captureBtn.style.display = 'inline-flex';
+    retakeBtn.style.display = 'none';
+});
+
+// Clean up on page unload
+window.addEventListener('beforeunload', function() {
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+    }
+});
+
+
+
     </script>
 </body>
 </html>
