@@ -1,24 +1,18 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
+from database import get_db_connection, init_db
+from event_logger import EventLogger
+from event_types import EventTypes
 import sqlite3
 import os
 import re
 import base64
 from datetime import datetime
-from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key-here-change-in-production'
 
-# Database path
-DB_PATH = 'instance/examguard.db'
-
-def get_db_connection():
-    """Create and return a database connection"""
-    os.makedirs('instance', exist_ok=True)
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+# ===== HELPER FUNCTIONS =====
 
 def validate_email(email):
     """Validate email format using regex"""
@@ -46,7 +40,6 @@ def save_photo(photo_data, candidate_id):
         
         # Remove the data URL prefix if present
         if 'base64' in photo_data:
-            # Extract the base64 data
             if ',' in photo_data:
                 photo_data = photo_data.split(',')[1]
         
@@ -68,6 +61,8 @@ def save_photo(photo_data, candidate_id):
     except Exception as e:
         print(f"Error saving photo: {e}")
         return None
+
+# ===== SESSION MANAGEMENT FUNCTIONS =====
 
 def create_session(candidate_id):
     """Create a new exam session for a candidate"""
@@ -107,7 +102,6 @@ def pause_session(session_id):
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # Check if session exists and is active
         cursor.execute('''
             SELECT status FROM session WHERE session_id = ?
         ''', (session_id,))
@@ -121,7 +115,6 @@ def pause_session(session_id):
             conn.close()
             return False, f"Session is already {session['status']}."
         
-        # Update status to paused
         cursor.execute('''
             UPDATE session 
             SET status = 'paused' 
@@ -141,7 +134,6 @@ def resume_session(session_id):
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # Check if session exists and is paused
         cursor.execute('''
             SELECT status FROM session WHERE session_id = ?
         ''', (session_id,))
@@ -155,7 +147,6 @@ def resume_session(session_id):
             conn.close()
             return False, f"Session is not paused (current status: {session['status']})."
         
-        # Update status to active
         cursor.execute('''
             UPDATE session 
             SET status = 'active' 
@@ -175,7 +166,6 @@ def end_session(session_id):
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # Check if session exists
         cursor.execute('''
             SELECT status FROM session WHERE session_id = ?
         ''', (session_id,))
@@ -189,7 +179,6 @@ def end_session(session_id):
             conn.close()
             return False, "Session is already completed."
         
-        # Update status to completed and set end time
         cursor.execute('''
             UPDATE session 
             SET status = 'completed', end_time = CURRENT_TIMESTAMP
@@ -203,52 +192,15 @@ def end_session(session_id):
     except Exception as e:
         return False, f"Error ending session: {str(e)}"
 
-def get_active_session(candidate_id):
-    """Get the current active session for a candidate"""
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-            SELECT * FROM session 
-            WHERE candidate_id = ? AND status IN ('active', 'paused')
-            ORDER BY start_time DESC LIMIT 1
-        ''', (candidate_id,))
-        
-        session = cursor.fetchone()
-        conn.close()
-        return session
-        
-    except Exception as e:
-        return None
-
-def get_session_history(candidate_id):
-    """Get all sessions for a candidate"""
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-            SELECT * FROM session 
-            WHERE candidate_id = ? 
-            ORDER BY start_time DESC
-        ''', (candidate_id,))
-        
-        sessions = cursor.fetchall()
-        conn.close()
-        return sessions
-        
-    except Exception as e:
-        return []
+# ===== ROUTES =====
 
 @app.route('/')
 def home():
-    """Home page - redirect to login"""
     return redirect(url_for('login'))
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    """Candidate Registration Page with Photo Capture"""
+    """Candidate Registration Page"""
     if request.method == 'POST':
         # Get form data
         name = request.form.get('name', '').strip()
@@ -287,7 +239,6 @@ def register():
         if not terms:
             errors.append("You must agree to the Terms & Conditions.")
         
-        # Check if photo was captured
         if not photo_data:
             errors.append("Please capture your photo.")
         
@@ -314,7 +265,6 @@ def register():
             # ===== STORE IN DATABASE =====
             hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
             
-            # First insert without photo path
             cursor.execute('''
                 INSERT INTO candidate (name, email, password, photo_path)
                 VALUES (?, ?, ?, ?)
@@ -326,7 +276,6 @@ def register():
             # Save photo and get path
             photo_path = save_photo(photo_data, candidate_id)
             
-            # Update candidate with photo path
             if photo_path:
                 cursor.execute('''
                     UPDATE candidate 
@@ -355,6 +304,7 @@ def register():
     
     # GET request - show registration form
     return render_template('register.html')
+    
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -392,13 +342,14 @@ def login():
                     return redirect(url_for('dashboard'))
                 else:
                     flash('❌ Invalid password. Please try again.', 'error')
+                    return render_template('login.html')
             else:
                 flash('❌ No account found with this email. Please register.', 'error')
+                return render_template('login.html')
                 
         except Exception as e:
             flash(f'❌ Login error: {str(e)}', 'error')
-        
-        return render_template('login.html')
+            return render_template('login.html')
     
     # GET request - show login form
     return render_template('login.html')
@@ -473,16 +424,8 @@ def dashboard():
         flash(f'Error loading dashboard: {str(e)}', 'error')
         return redirect(url_for('login'))
 
-@app.route('/logout')
-def logout():
-    """Logout user"""
-    session.clear()
-    flash('You have been logged out successfully.', 'info')
-    return redirect(url_for('login'))
-
 @app.route('/start-exam', methods=['POST'])
 def start_exam():
-    """Start a new exam session"""
     if 'candidate_id' not in session:
         flash('Please login first.', 'warning')
         return redirect(url_for('login'))
@@ -492,6 +435,13 @@ def start_exam():
     session_id, message = create_session(candidate_id)
     
     if session_id:
+        # Log event
+        EventLogger.log_event(
+            session_id, 
+            candidate_id, 
+            'exam_started',
+            f"Exam started by candidate ID: {candidate_id}"
+        )
         flash(message, 'success')
         session['exam_session_id'] = session_id
     else:
@@ -501,7 +451,6 @@ def start_exam():
 
 @app.route('/pause-exam', methods=['POST'])
 def pause_exam():
-    """Pause the current exam session"""
     if 'candidate_id' not in session:
         flash('Please login first.', 'warning')
         return redirect(url_for('login'))
@@ -511,9 +460,16 @@ def pause_exam():
         return redirect(url_for('dashboard'))
     
     session_id = session['exam_session_id']
+    candidate_id = session['candidate_id']
     success, message = pause_session(session_id)
     
     if success:
+        EventLogger.log_event(
+            session_id, 
+            candidate_id, 
+            'exam_paused',
+            f"Exam paused by candidate ID: {candidate_id}"
+        )
         flash(message, 'success')
     else:
         flash(message, 'error')
@@ -522,7 +478,6 @@ def pause_exam():
 
 @app.route('/resume-exam', methods=['POST'])
 def resume_exam():
-    """Resume a paused exam session"""
     if 'candidate_id' not in session:
         flash('Please login first.', 'warning')
         return redirect(url_for('login'))
@@ -532,9 +487,16 @@ def resume_exam():
         return redirect(url_for('dashboard'))
     
     session_id = session['exam_session_id']
+    candidate_id = session['candidate_id']
     success, message = resume_session(session_id)
     
     if success:
+        EventLogger.log_event(
+            session_id, 
+            candidate_id, 
+            'exam_resumed',
+            f"Exam resumed by candidate ID: {candidate_id}"
+        )
         flash(message, 'success')
     else:
         flash(message, 'error')
@@ -543,7 +505,6 @@ def resume_exam():
 
 @app.route('/end-exam', methods=['POST'])
 def end_exam():
-    """End the current exam session"""
     if 'candidate_id' not in session:
         flash('Please login first.', 'warning')
         return redirect(url_for('login'))
@@ -553,9 +514,16 @@ def end_exam():
         return redirect(url_for('dashboard'))
     
     session_id = session['exam_session_id']
+    candidate_id = session['candidate_id']
     success, message = end_session(session_id)
     
     if success:
+        EventLogger.log_event(
+            session_id, 
+            candidate_id, 
+            'exam_submitted',
+            f"Exam submitted by candidate ID: {candidate_id}"
+        )
         flash(message, 'success')
         session.pop('exam_session_id', None)
     else:
@@ -563,8 +531,77 @@ def end_exam():
     
     return redirect(url_for('dashboard'))
 
+@app.route('/exam')
+def exam_page():
+    if 'candidate_id' not in session:
+        flash('Please login first.', 'warning')
+        return redirect(url_for('login'))
+    
+    if 'exam_session_id' not in session:
+        flash('Please start an exam session first.', 'warning')
+        return redirect(url_for('dashboard'))
+    
+    return render_template('exam.html', 
+                         session_id=session['exam_session_id'],
+                         candidate_id=session['candidate_id'])
 
+@app.route('/log-event', methods=['POST'])
+def log_event():
+    try:
+        data = request.json
+        
+        session_id = data.get('session_id')
+        candidate_id = data.get('candidate_id')
+        event_type = data.get('event_type')
+        remarks = data.get('remarks', '')
+        event_data = data.get('event_data', '')
+        
+        if not all([session_id, candidate_id, event_type]):
+            return jsonify({'status': 'error', 'message': 'Missing required fields'}), 400
+        
+        event_id = EventLogger.log_event(
+            session_id, 
+            candidate_id, 
+            event_type, 
+            remarks, 
+            event_data
+        )
+        
+        if event_id:
+            return jsonify({'status': 'success', 'event_id': event_id})
+        else:
+            return jsonify({'status': 'error', 'message': 'Failed to log event'}), 500
+            
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/view-events/<int:candidate_id>')
+def view_events(candidate_id):
+    if 'candidate_id' not in session:
+        flash('Please login first.', 'warning')
+        return redirect(url_for('login'))
+    
+    if session['candidate_id'] != candidate_id:
+        flash('You can only view your own events.', 'error')
+        return redirect(url_for('dashboard'))
+    
+    events = EventLogger.get_candidate_events(candidate_id)
+    stats = EventLogger.get_event_statistics(candidate_id)
+    
+    return render_template('view_events.html', 
+                         events=events, 
+                         stats=stats,
+                         candidate_id=candidate_id)
+
+
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    flash('You have been logged out successfully.', 'info')
+    return redirect(url_for('login'))
 
 if __name__ == '__main__':
     print("🚀 Starting ExamGuard Application...")
+    init_db()
     app.run(debug=True, host='0.0.0.0', port=5000)
