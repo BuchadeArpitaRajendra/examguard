@@ -20,11 +20,13 @@ class EventLogger:
             event_id = cursor.lastrowid
             conn.close()
             
+            print(f"📝 Event logged: {event_type} - {remarks}")
             return event_id
             
         except Exception as e:
-            print(f"Error logging event: {e}")
+            print(f"❌ Error logging event: {e}")
             return None
+    
     
     @staticmethod
     def get_session_events(session_id):
