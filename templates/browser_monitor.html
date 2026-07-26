@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browser Monitor - ExamGuard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .monitor-container {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+        }
+        
+        .monitor-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .status-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+        }
+        
+        .status-card .status-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        
+        .status-card .status-text {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .status-card .status-text.active {
+            color: #27ae60;
+        }
+        
+        .status-card .status-text.inactive {
+            color: #e74c3c;
+        }
+        
+        .stat-box {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .stat-box .number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-box .label {
+            font-size: 12px;
+            color: #888;
+        }
+        
+        .event-list-container {
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            border-radius: 10px;
+        }
+        
+        .event-item {
+            padding: 10px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .event-item .event-time {
+            color: #888;
+            font-size: 12px;
+        }
+        
+        .event-item .event-type-label {
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .event-item .event-type-label.browser_focus_lost {
+            color: #e74c3c;
+        }
+        
+        .event-item .event-type-label.browser_focus_gained {
+            color: #27ae60;
+        }
+        
+        .event-item .event-type-label.tab_switched {
+            color: #f39c12;
+        }
+        
+        .no-events {
+            text-align: center;
+            color: #888;
+            padding: 20px;
+        }
+        
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #667eea;
+            text-decoration: none;
+        }
+        
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 768px) {
+            .monitor-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <input type="hidden" id="sessionId" value="{{ session_id }}">
+    <input type="hidden" id="candidateId" value="{{ candidate_id }}">
+
+    <div class="monitor-container">
+        <h1>🌐 Browser Activity Monitor</h1>
+        <p>Real-time browser focus and activity tracking</p>
+
+        <div class="monitor-grid">
+            <!-- Browser Status -->
+            <div class="status-card">
+                <div class="status-icon" id="browserStatusIcon">
+                    <i class="fas fa-check-circle" style="color: #27ae60;"></i>
+                </div>
+                <div class="status-text active" id="browserStatus">🟢 Active</div>
+                <p style="color: #888; font-size: 14px;">Current Browser Status</p>
+            </div>
+
+            <!-- Stats -->
+            <div class="status-card">
+                <div class="stat-box">
+                    <div class="number" id="focusLostCount">0</div>
+                    <div class="label">Focus Lost Events</div>
+                </div>
+                <div class="stat-box" style="margin-top: 10px;">
+                    <div class="number" id="focusGainedCount">0</div>
+                    <div class="label">Focus Gained Events</div>
+                </div>
+                <div class="stat-box" style="margin-top: 10px;">
+                    <div class="number" id="tabSwitchCount">0</div>
+                    <div class="label">Tab Switches</div>
+                </div>
+                <div class="stat-box" style="margin-top: 10px;">
+                    <div class="number" id="lastFocusLost">Never</div>
+                    <div class="label">Last Focus Lost</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Event Log -->
+        <h3 style="margin-top: 30px; color: #333;">📋 Browser Activity Log</h3>
+        <div class="event-list-container" id="eventLogList">
+            <div class="no-events">
+                <i class="fas fa-circle-notch fa-spin"></i> Waiting for browser events...
+            </div>
+        </div>
+
+        <a href="{{ url_for('dashboard') }}" class="back-link">← Back to Dashboard</a>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/event_logger.js') }}"></script>
+    <script>
+        // Update browser display function
+        function updateBrowserDisplay() {
+            if (window.eventLogger) {
+                window.eventLogger.updateBrowserDisplay();
+            }
+        }
+
+        // Update every second
+        setInterval(updateBrowserDisplay, 1000);
+
+        // Update on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(updateBrowserDisplay, 500);
+            
+            // Log page loaded
+            if (window.eventLogger) {
+                window.eventLogger.logEvent('browser_monitor_started', 'Browser monitoring started');
+            }
+        });
+    </script>
+</body>
+</html>

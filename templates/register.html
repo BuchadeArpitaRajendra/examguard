@@ -7,10 +7,11 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body>
-    <div class="container">
-        <div class="header">
-            <div class="logo">📝</div>
+<body class="auth-page">
+    <div class="auth-container">
+        <!-- Header -->
+        <div class="auth-header">
+            <span class="auth-logo">📝</span>
             <h1>Create Account</h1>
             <p>Register for your exam session</p>
         </div>
@@ -21,6 +22,7 @@
                 <div class="flash-messages">
                     {% for category, message in messages %}
                         <div class="alert alert-{{ category }}">
+                            <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'error' %}exclamation-circle{% elif category == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
                             <span>{{ message }}</span>
                             <button class="close-btn" onclick="this.parentElement.remove()">&times;</button>
                         </div>
@@ -30,14 +32,13 @@
         {% endwith %}
 
         <!-- Registration Form -->
-        <form method="POST" action="{{ url_for('register') }}" id="registerForm" novalidate>
+        <form method="POST" action="{{ url_for('register') }}" id="registerForm" class="auth-form" novalidate>
             <!-- Name -->
             <div class="form-group">
                 <label for="name">
-                    Full Name <span class="required">*</span>
+                    <i class="fas fa-user"></i> Full Name <span class="required">*</span>
                 </label>
                 <div class="input-group">
-                    <span class="icon"><i class="fas fa-user"></i></span>
                     <input 
                         type="text" 
                         id="name" 
@@ -46,19 +47,17 @@
                         value="{{ form_data.name if form_data else '' }}"
                         required
                         minlength="2"
-                        title="Name must be at least 2 characters"
                     >
                 </div>
-                <small style="color: #888; font-size: 12px;">Minimum 2 characters</small>
+                <small>Minimum 2 characters</small>
             </div>
 
             <!-- Email -->
             <div class="form-group">
                 <label for="email">
-                    Email Address <span class="required">*</span>
+                    <i class="fas fa-envelope"></i> Email Address <span class="required">*</span>
                 </label>
                 <div class="input-group">
-                    <span class="icon"><i class="fas fa-envelope"></i></span>
                     <input 
                         type="email" 
                         id="email" 
@@ -66,15 +65,14 @@
                         placeholder="Enter your email address" 
                         value="{{ form_data.email if form_data else '' }}"
                         required
-                        title="Please enter a valid email address"
                     >
                 </div>
-                <small style="color: #888; font-size: 12px;">Must be a valid email format (e.g., name@example.com)</small>
+                <small>Must be a valid email format (e.g., name@example.com)</small>
             </div>
-            
-            <!-- Photo Capture Section -->
+
+            <!-- Photo Capture -->
             <div class="form-group">
-                <label>Profile Photo <span class="required">*</span></label>
+                <label><i class="fas fa-camera"></i> Profile Photo <span class="required">*</span></label>
                 <div class="photo-capture-section">
                     <div class="video-container">
                         <video id="video" autoplay playsinline></video>
@@ -95,7 +93,7 @@
                         </button>
                     </div>
                     <input type="hidden" id="photo_data" name="photo_data" value="">
-                    <small style="color: #888; font-size: 12px; display: block; margin-top: 10px;">
+                    <small>
                         📸 Please allow camera access when prompted. Your photo will be used for identity verification during exams.
                     </small>
                 </div>
@@ -104,10 +102,9 @@
             <!-- Password -->
             <div class="form-group">
                 <label for="password">
-                    Password <span class="required">*</span>
+                    <i class="fas fa-lock"></i> Password <span class="required">*</span>
                 </label>
                 <div class="input-group">
-                    <span class="icon"><i class="fas fa-lock"></i></span>
                     <input 
                         type="password" 
                         id="password" 
@@ -115,25 +112,21 @@
                         placeholder="Create a strong password" 
                         required
                         minlength="8"
-                        title="Password must be at least 8 characters with uppercase, lowercase and number"
                     >
                 </div>
                 <div class="password-strength">
                     <div class="strength-bar" id="strengthBar"></div>
                 </div>
                 <span class="strength-text" id="strengthText">Enter a password</span>
-                <small style="color: #888; font-size: 12px; display: block; margin-top: 5px;">
-                    Requirements: 8+ chars, uppercase, lowercase, and number
-                </small>
+                <small>Requirements: 8+ chars, uppercase, lowercase, and number</small>
             </div>
 
             <!-- Confirm Password -->
             <div class="form-group">
                 <label for="confirm_password">
-                    Confirm Password <span class="required">*</span>
+                    <i class="fas fa-check-circle"></i> Confirm Password <span class="required">*</span>
                 </label>
                 <div class="input-group">
-                    <span class="icon"><i class="fas fa-check-circle"></i></span>
                     <input 
                         type="password" 
                         id="confirm_password" 
@@ -142,10 +135,10 @@
                         required
                     >
                 </div>
-                <span id="passwordMatch" style="font-size: 12px; margin-top: 5px; display: block;"></span>
+                <span id="passwordMatch"></span>
             </div>
 
-            <!-- Terms and Conditions -->
+            <!-- Terms -->
             <div class="terms">
                 <input type="checkbox" id="terms" name="terms" required>
                 <label for="terms">
@@ -154,15 +147,15 @@
             </div>
 
             <!-- Submit Button -->
-            <button type="submit" class="btn-submit" id="submitBtn">
-                <span class="btn-text">Create Account</span>
+            <button type="submit" class="btn-login" id="submitBtn">
+                <i class="fas fa-user-plus"></i> <span class="btn-text">Create Account</span>
                 <div class="spinner"></div>
             </button>
         </form>
 
         <!-- Login Link -->
-        <div class="login-link">
-            Already have an account? <a href="{{ url_for('login') }}">Login here</a>
+        <div class="auth-footer">
+            <p>Already have an account? <a href="{{ url_for('login') }}">Login here</a></p>
         </div>
     </div>
 
@@ -185,7 +178,6 @@
                 return;
             }
 
-            // Check password requirements
             if (password.length >= 8) strength++;
             if (password.length >= 12) strength++;
             if (/[a-z]/.test(password)) strength++;
@@ -218,7 +210,7 @@
                 strengthText.style.color = '#27ae60';
             }
 
-            strengthText.textContent = `Password Strength: ${message}`;
+            strengthText.textContent = 'Password Strength: ' + message;
         });
 
         // ===== CONFIRM PASSWORD VALIDATION =====
@@ -247,51 +239,52 @@
         confirmPasswordInput.addEventListener('input', validatePasswordMatch);
         passwordInput.addEventListener('input', validatePasswordMatch);
 
-        // ===== FORM VALIDATION BEFORE SUBMIT =====
+        // ===== FORM VALIDATION =====
         document.getElementById('registerForm').addEventListener('submit', function(e) {
             const password = passwordInput.value;
             const confirm = confirmPasswordInput.value;
             const terms = document.getElementById('terms');
             const name = document.getElementById('name').value.trim();
             const email = document.getElementById('email').value.trim();
+            const photoData = document.getElementById('photo_data').value;
             const submitBtn = document.getElementById('submitBtn');
 
-            // Check if name is empty
             if (!name) {
                 e.preventDefault();
                 alert('Please enter your full name.');
                 return;
             }
 
-            // Check if email is empty
             if (!email) {
                 e.preventDefault();
                 alert('Please enter your email address.');
                 return;
             }
 
-            // Check if passwords match
             if (password !== confirm) {
                 e.preventDefault();
                 alert('Passwords do not match! Please make sure both passwords are the same.');
                 return;
             }
 
-            // Check password length
             if (password.length < 8) {
                 e.preventDefault();
                 alert('Password must be at least 8 characters long!');
                 return;
             }
 
-            // Check terms agreement
             if (!terms.checked) {
                 e.preventDefault();
                 alert('Please agree to the Terms & Conditions to register.');
                 return;
             }
 
-            // Show loading state
+            if (!photoData) {
+                e.preventDefault();
+                alert('Please capture your photo before registering.');
+                return;
+            }
+
             submitBtn.classList.add('loading');
             submitBtn.disabled = true;
         });
@@ -304,128 +297,106 @@
         });
 
         // ===== AUTO-DISMISS SUCCESS MESSAGES =====
-        setTimeout(() => {
-            document.querySelectorAll('.alert-success').forEach(alert => {
-                setTimeout(() => {
+        setTimeout(function() {
+            document.querySelectorAll('.alert-success').forEach(function(alert) {
+                setTimeout(function() {
                     alert.style.opacity = '0';
                     alert.style.transition = 'opacity 0.5s';
-                    setTimeout(() => alert.remove(), 500);
+                    setTimeout(function() { alert.remove(); }, 500);
                 }, 3000);
             });
         }, 1000);
 
-        // ===== PHOTO CAPTURE FUNCTIONALITY =====
-const video = document.getElementById('video');
-const canvas = document.getElementById('canvas');
-const photoPreview = document.getElementById('photoPreview');
-const capturedPhoto = document.getElementById('capturedPhoto');
-const photoDataInput = document.getElementById('photo_data');
+        // ===== PHOTO CAPTURE =====
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const photoPreview = document.getElementById('photoPreview');
+        const capturedPhoto = document.getElementById('capturedPhoto');
+        const photoDataInput = document.getElementById('photo_data');
 
-const startCameraBtn = document.getElementById('startCameraBtn');
-const captureBtn = document.getElementById('captureBtn');
-const retakeBtn = document.getElementById('retakeBtn');
+        const startCameraBtn = document.getElementById('startCameraBtn');
+        const captureBtn = document.getElementById('captureBtn');
+        const retakeBtn = document.getElementById('retakeBtn');
 
-let stream = null;
-let photoCaptured = false;
+        let stream = null;
+        let photoCaptured = false;
 
-// Start Camera
-startCameraBtn.addEventListener('click', async function() {
-    try {
-        stream = await navigator.mediaDevices.getUserMedia({
-            video: {
-                width: { ideal: 640 },
-                height: { ideal: 480 }
-            },
-            audio: false
+        startCameraBtn.addEventListener('click', async function() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: { ideal: 640 }, height: { ideal: 480 } },
+                    audio: false
+                });
+
+                video.srcObject = stream;
+                await video.play();
+
+                video.style.display = 'block';
+                photoPreview.style.display = 'none';
+
+                startCameraBtn.style.display = 'none';
+                captureBtn.style.display = 'inline-flex';
+                retakeBtn.style.display = 'none';
+
+                this.textContent = '📹 Camera Started';
+                this.disabled = true;
+
+            } catch (error) {
+                console.error('Camera error:', error);
+                alert('⚠️ Unable to access camera. Please allow camera access and try again.');
+            }
         });
-        
-        video.srcObject = stream;
-        await video.play();
-        
-        // Show video, hide preview
-        video.style.display = 'block';
-        photoPreview.style.display = 'none';
-        
-        // Update buttons
-        startCameraBtn.style.display = 'none';
-        captureBtn.style.display = 'inline-flex';
-        retakeBtn.style.display = 'none';
-        
-        this.textContent = '📹 Camera Started';
-        this.disabled = true;
-        
-    } catch (error) {
-        console.error('Camera error:', error);
-        alert('⚠️ Unable to access camera. Please allow camera access and try again.');
-    }
-});
 
-// Capture Photo
-captureBtn.addEventListener('click', function() {
-    if (!stream) {
-        alert('Please start the camera first.');
-        return;
-    }
-    
-    // Draw video frame to canvas
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const context = canvas.getContext('2d');
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
-    
-    // Convert to image data
-    const photoData = canvas.toDataURL('image/jpeg', 0.9);
-    
-    // Show preview
-    capturedPhoto.src = photoData;
-    video.style.display = 'none';
-    photoPreview.style.display = 'block';
-    
-    // Store data for submission
-    photoDataInput.value = photoData;
-    photoCaptured = true;
-    
-    // Update buttons
-    captureBtn.style.display = 'none';
-    retakeBtn.style.display = 'inline-flex';
-    
-    // Stop camera
-    if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-        stream = null;
-    }
-    
-    startCameraBtn.textContent = '📹 Start Camera';
-    startCameraBtn.disabled = false;
-});
+        captureBtn.addEventListener('click', function() {
+            if (!stream) {
+                alert('Please start the camera first.');
+                return;
+            }
 
-// Retake Photo
-retakeBtn.addEventListener('click', function() {
-    // Clear photo data
-    photoDataInput.value = '';
-    photoCaptured = false;
-    
-    // Reset display
-    photoPreview.style.display = 'none';
-    video.style.display = 'block';
-    
-    // Restart camera
-    startCameraBtn.click();
-    
-    // Update buttons
-    captureBtn.style.display = 'inline-flex';
-    retakeBtn.style.display = 'none';
-});
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-// Clean up on page unload
-window.addEventListener('beforeunload', function() {
-    if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-    }
-});
+            const photoData = canvas.toDataURL('image/jpeg', 0.9);
 
+            capturedPhoto.src = photoData;
+            video.style.display = 'none';
+            photoPreview.style.display = 'block';
 
+            photoDataInput.value = photoData;
+            photoCaptured = true;
 
+            captureBtn.style.display = 'none';
+            retakeBtn.style.display = 'inline-flex';
+
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+
+            startCameraBtn.textContent = '📹 Start Camera';
+            startCameraBtn.disabled = false;
+        });
+
+        retakeBtn.addEventListener('click', function() {
+            photoDataInput.value = '';
+            photoCaptured = false;
+
+            photoPreview.style.display = 'none';
+            video.style.display = 'block';
+
+            startCameraBtn.click();
+
+            captureBtn.style.display = 'inline-flex';
+            retakeBtn.style.display = 'none';
+        });
+
+        window.addEventListener('beforeunload', function() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+        });
     </script>
 </body>
 </html>

@@ -26,8 +26,89 @@ class EventLogger:
         except Exception as e:
             print(f"❌ Error logging event: {e}")
             return None
+
+    @staticmethod
+    def log_browser_focus_lost(session_id, candidate_id, remarks="Browser focus lost"):
+        """Log browser focus lost event"""
+        return EventLogger.log_event(
+            session_id, 
+            candidate_id, 
+            'browser_focus_lost', 
+            remarks
+        )
     
+    @staticmethod
+    def log_browser_focus_gained(session_id, candidate_id, remarks="Browser focus regained"):
+        """Log browser focus regained event"""
+        return EventLogger.log_event(
+            session_id, 
+            candidate_id, 
+            'browser_focus_gained', 
+            remarks
+        )
     
+    @staticmethod
+    def log_tab_switched(session_id, candidate_id, remarks="Browser tab switched"):
+        """Log tab switch event"""
+        return EventLogger.log_event(
+            session_id, 
+            candidate_id, 
+            'tab_switched', 
+            remarks
+        )
+    
+    @staticmethod
+    def get_browser_events(candidate_id, limit=100):
+        """Get browser events for a candidate"""
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            
+            cursor.execute('''
+                SELECT * FROM event_log 
+                WHERE candidate_id = ? 
+                AND event_type IN ('browser_focus_lost', 'browser_focus_gained', 'tab_switched')
+                ORDER BY timestamp DESC
+                LIMIT ?
+            ''', (candidate_id, limit))
+            
+            events = cursor.fetchall()
+            conn.close()
+            return events
+            
+        except Exception as e:
+            print(f"Error getting browser events: {e}")
+            return []
+    
+    @staticmethod
+    def get_browser_focus_count(candidate_id):
+        """Get count of browser focus events"""
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            
+            cursor.execute('''
+                SELECT 
+                    COUNT(CASE WHEN event_type = 'browser_focus_lost' THEN 1 END) as focus_lost,
+                    COUNT(CASE WHEN event_type = 'browser_focus_gained' THEN 1 END) as focus_gained,
+                    COUNT(CASE WHEN event_type = 'tab_switched' THEN 1 END) as tab_switches
+                FROM event_log 
+                WHERE candidate_id = ?
+            ''', (candidate_id,))
+            
+            result = cursor.fetchone()
+            conn.close()
+            
+            return {
+                'focus_lost': result[0] if result else 0,
+                'focus_gained': result[1] if result else 0,
+                'tab_switches': result[2] if result else 0
+            }
+            
+        except Exception as e:
+            print(f"Error getting browser focus count: {e}")
+            return {'focus_lost': 0, 'focus_gained': 0, 'tab_switches': 0}
+  
     @staticmethod
     def get_session_events(session_id):
         """Get all events for a session"""

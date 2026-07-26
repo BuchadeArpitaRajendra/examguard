@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Monitor - ExamGuard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .monitor-container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+        }
+        .video-container {
+            background: #000;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        .video-container img {
+            width: 100%;
+            display: block;
+        }
+        .status-box {
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            margin: 15px 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .status-box.detected {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #27ae60;
+        }
+        .status-box.not-detected {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #e74c3c;
+        }
+        .btn-capture {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-capture:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102,126,234,0.4);
+        }
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #667eea;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="monitor-container">
+        <h1>📸 Face Monitor</h1>
+        <p>Live face detection during your exam session</p>
+        
+        <div class="video-container">
+            <img src="{{ url_for('face.video_feed') }}" alt="Video Feed" id="videoFeed">
+        </div>
+        
+        <div id="statusBox" class="status-box detected">
+            <i class="fas fa-spinner fa-spin"></i> Waiting for face detection...
+        </div>
+        
+        <button class="btn-capture" onclick="capturePhoto()">
+            <i class="fas fa-camera"></i> Capture Photo
+        </button>
+        
+        <a href="{{ url_for('dashboard') }}" class="back-link">← Back to Dashboard</a>
+    </div>
+    
+    <script>
+        // Simulate face detection status updates
+        const videoFeed = document.getElementById('videoFeed');
+        const statusBox = document.getElementById('statusBox');
+        
+        function updateStatus() {
+            // In a real implementation, this would come from the server
+            // For now, we'll use a placeholder
+            const detected = Math.random() > 0.3;
+            
+            if (detected) {
+                statusBox.className = 'status-box detected';
+                statusBox.innerHTML = '<i class="fas fa-check-circle"></i> ✅ Face Detected';
+            } else {
+                statusBox.className = 'status-box not-detected';
+                statusBox.innerHTML = '<i class="fas fa-exclamation-circle"></i> ❌ Face Not Detected';
+            }
+        }
+        
+        function capturePhoto() {
+            fetch('{{ url_for("face.capture_photo") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('✅ Photo captured successfully!');
+                } else {
+                    alert('❌ Failed to capture photo: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('❌ Error: ' + error);
+            });
+        }
+        
+        // Update status every 2 seconds
+        setInterval(updateStatus, 2000);
+        updateStatus();
+    </script>
+</body>
+</html>

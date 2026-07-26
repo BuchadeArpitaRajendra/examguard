@@ -6,263 +6,6 @@
     <title>Exam in Progress - ExamGuard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        /* Exam specific styles */
-        .exam-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        .exam-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px 30px;
-            border-radius: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-
-        .exam-title {
-            font-size: 24px;
-            font-weight: bold;
-        }
-
-        .exam-timer {
-            font-size: 28px;
-            font-weight: bold;
-            background: rgba(255,255,255,0.2);
-            padding: 10px 20px;
-            border-radius: 10px;
-            font-family: monospace;
-        }
-
-        .exam-actions {
-            display: flex;
-            gap: 10px;
-        }
-
-        .btn-submit-exam {
-            background: #e74c3c;
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .btn-submit-exam:hover {
-            background: #c0392b;
-            transform: translateY(-2px);
-        }
-
-        .exam-content {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 20px;
-        }
-
-        .exam-instructions {
-            background: white;
-            padding: 25px;
-            border-radius: 15px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        }
-
-        .exam-instructions h3 {
-            color: #333;
-            margin-bottom: 15px;
-        }
-
-        .exam-instructions ul {
-            list-style: none;
-            padding: 0;
-        }
-
-        .exam-instructions ul li {
-            padding: 8px 0;
-            padding-left: 30px;
-            position: relative;
-            color: #555;
-        }
-
-        .exam-instructions ul li::before {
-            content: '⚠️';
-            position: absolute;
-            left: 0;
-        }
-
-        .exam-instructions ul li:first-child::before {
-            content: '🚫';
-        }
-
-        .exam-instructions ul li:nth-child(2)::before {
-            content: '📸';
-        }
-
-        .exam-instructions ul li:nth-child(3)::before {
-            content: '🚫';
-        }
-
-        .exam-instructions ul li:nth-child(4)::before {
-            content: '👀';
-        }
-
-        /* Event log on exam page */
-        .event-log-section {
-            background: white;
-            padding: 25px;
-            border-radius: 15px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        }
-
-        .event-log-section h3 {
-            color: #333;
-            margin-bottom: 15px;
-        }
-
-        .event-stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .event-stat {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            border: 2px solid transparent;
-            transition: all 0.3s ease;
-        }
-
-        .event-stat.warning {
-            border-color: #e74c3c;
-            background: #fdf2f2;
-        }
-
-        .event-stat .stat-number {
-            font-size: 28px;
-            font-weight: bold;
-            color: #333;
-        }
-
-        .event-stat .stat-label {
-            font-size: 12px;
-            color: #888;
-            margin-top: 5px;
-        }
-
-        .event-list {
-            max-height: 300px;
-            overflow-y: auto;
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 10px;
-            list-style: none;
-        }
-
-        .event-list li {
-            padding: 8px 12px;
-            margin: 4px 0;
-            font-size: 13px;
-            border-bottom: 1px solid #eee;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-radius: 5px;
-            animation: slideIn 0.3s ease;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        .event-list li .event-time {
-            color: #888;
-            font-size: 11px;
-        }
-
-        .event-list li .event-type {
-            font-weight: 500;
-        }
-
-        .event-list li .event-type.tab_switched {
-            color: #e67e22;
-        }
-        .event-list li .event-type.focus_lost {
-            color: #3498db;
-        }
-        .event-list li .event-type.focus_gained {
-            color: #2ecc71;
-        }
-        .event-list li .event-type.copy_attempted {
-            color: #e74c3c;
-        }
-        .event-list li .event-type.paste_attempted {
-            color: #e74c3c;
-        }
-        .event-list li .event-type.right_click_detected {
-            color: #9b59b6;
-        }
-        .event-list li .event-type.exam_started {
-            color: #27ae60;
-        }
-        .event-list li .event-type.exam_paused {
-            color: #f39c12;
-        }
-        .event-list li .event-type.exam_resumed {
-            color: #2ecc71;
-        }
-        .event-list li .event-type.exam_submitted {
-            color: #2980b9;
-        }
-        .event-list li .event-type.face_not_detected {
-            color: #e74c3c;
-        }
-        .event-list li .event-type.face_detected {
-            color: #27ae60;
-        }
-        .event-list li .event-type.suspicious_activity {
-            color: #e74c3c;
-            font-weight: bold;
-        }
-
-        .back-link {
-            margin-top: 20px;
-            text-align: center;
-        }
-
-        .back-link a {
-            color: #667eea;
-            text-decoration: none;
-            font-weight: 600;
-            padding: 10px 20px;
-            border: 2px solid #667eea;
-            border-radius: 10px;
-            transition: all 0.3s ease;
-        }
-
-        .back-link a:hover {
-            background: #667eea;
-            color: white;
-        }
-    </style>
 </head>
 <body>
     <input type="hidden" id="sessionId" value="{{ session_id }}">
@@ -282,6 +25,7 @@
 
         <!-- Main Content -->
         <div class="exam-content">
+            <!-- Instructions -->
             <div class="exam-instructions">
                 <h3>📋 Exam Instructions</h3>
                 <ul>
@@ -290,12 +34,12 @@
                     <li>Do not copy or paste content</li>
                     <li>Stay focused on the exam window</li>
                 </ul>
-                <div style="margin-top: 15px; padding: 10px; background: #fff3cd; border-radius: 8px; color: #856404;">
+                <div class="exam-note">
                     <strong>⚠️ Note:</strong> All your activities are being monitored and logged for integrity purposes.
                 </div>
             </div>
 
-            <!-- Event Log Display -->
+            <!-- Event Log -->
             <div class="event-log-section">
                 <h3>📋 Live Activity Log</h3>
                 <div class="event-stats">
@@ -313,7 +57,7 @@
                     </div>
                 </div>
                 <ul class="event-list" id="eventLogList">
-                    <li style="color: #888; text-align: center; justify-content: center;">
+                    <li class="waiting-message">
                         <i class="fas fa-circle-notch fa-spin"></i> Waiting for events...
                     </li>
                 </ul>
@@ -328,48 +72,46 @@
     <!-- Event Logger JavaScript -->
     <script src="{{ url_for('static', filename='js/event_logger.js') }}"></script>
     <script>
-        // Exam Timer
-        let startTime = new Date();
-        let timerInterval;
+        // ===== EXAM TIMER =====
+        var startTime = new Date();
+        var timerInterval;
 
         function updateTimer() {
-            const now = new Date();
-            const diff = Math.floor((now - startTime) / 1000);
-            const hours = String(Math.floor(diff / 3600)).padStart(2, '0');
-            const minutes = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
-            const seconds = String(diff % 60).padStart(2, '0');
-            document.getElementById('examTimer').textContent = `${hours}:${minutes}:${seconds}`;
+            var now = new Date();
+            var diff = Math.floor((now - startTime) / 1000);
+            var hours = String(Math.floor(diff / 3600)).padStart(2, '0');
+            var minutes = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
+            var seconds = String(diff % 60).padStart(2, '0');
+            document.getElementById('examTimer').textContent = hours + ':' + minutes + ':' + seconds;
         }
 
-        // Start timer
         timerInterval = setInterval(updateTimer, 1000);
         updateTimer();
 
-        // Override updateDisplay to update event count
+        // ===== UPDATE EVENT COUNT =====
         function updateEventCount() {
-            const eventList = document.getElementById('eventLogList');
-            const items = eventList.querySelectorAll('li:not([style])');
-            const eventCountElement = document.getElementById('eventCount');
+            var eventList = document.getElementById('eventLogList');
+            var items = eventList.querySelectorAll('li:not(.waiting-message)');
+            var eventCountElement = document.getElementById('eventCount');
             if (eventCountElement) {
                 eventCountElement.textContent = items.length;
             }
         }
 
-        // Wait for event logger to initialize
+        // ===== INITIALIZE EVENT LOGGER =====
         document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(() => {
+            setTimeout(function() {
                 if (window.eventLogger) {
-                    // Log exam page loaded
                     window.eventLogger.logEvent('exam_page_loaded', 'Exam page loaded successfully');
-                    
-                    // Update count after initialization
                     setTimeout(updateEventCount, 100);
                 }
             }, 1000);
         });
 
-        // Listen for event log updates
-        const originalUpdateDisplay = window.ExamEventLogger?.prototype?.updateDisplay;
+        // ===== OVERRIDE UPDATE DISPLAY =====
+        var originalUpdateDisplay = window.ExamEventLogger && window.ExamEventLogger.prototype ? 
+            window.ExamEventLogger.prototype.updateDisplay : null;
+            
         if (originalUpdateDisplay) {
             window.ExamEventLogger.prototype.updateDisplay = function(eventType) {
                 originalUpdateDisplay.call(this, eventType);
@@ -377,14 +119,14 @@
             };
         }
 
-        // Log before unload
+        // ===== LOG PAGE UNLOAD =====
         window.addEventListener('beforeunload', function() {
             if (window.eventLogger) {
                 window.eventLogger.logEvent('page_unload', 'Exam page closed or refreshed');
             }
         });
 
-        // Update count every second as fallback
+        // ===== UPDATE COUNT EVERY SECOND =====
         setInterval(updateEventCount, 1000);
     </script>
 </body>

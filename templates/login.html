@@ -7,19 +7,22 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body>
-    <div class="container">
-        <div class="header">
-            <div class="logo">🔐</div>
+<body class="auth-page">
+    <div class="auth-container">
+        <!-- Header -->
+        <div class="auth-header">
+            <span class="auth-logo">📝</span>
             <h1>Welcome Back</h1>
             <p>Login to your exam portal</p>
         </div>
 
+        <!-- Flash Messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 <div class="flash-messages">
                     {% for category, message in messages %}
                         <div class="alert alert-{{ category }}">
+                            <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'error' %}exclamation-circle{% elif category == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
                             <span>{{ message }}</span>
                             <button class="close-btn" onclick="this.parentElement.remove()">&times;</button>
                         </div>
@@ -28,46 +31,82 @@
             {% endif %}
         {% endwith %}
 
-        <form method="POST" action="{{ url_for('login') }}">
+        <!-- Login Form -->
+        <form method="POST" action="{{ url_for('login') }}" class="auth-form">
             <div class="form-group">
-                <label for="email">Email Address <span class="required">*</span></label>
+                <label for="email">
+                    <i class="fas fa-envelope"></i> Email Address <span class="required">*</span>
+                </label>
                 <div class="input-group">
-                    <span class="icon"><i class="fas fa-envelope"></i></span>
-                    <input type="email" id="email" name="email" placeholder="Enter your email" required>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        name="email" 
+                        placeholder="Enter your email" 
+                        required
+                        autofocus
+                    >
                 </div>
             </div>
 
             <div class="form-group">
-                <label for="password">Password <span class="required">*</span></label>
+                <label for="password">
+                    <i class="fas fa-lock"></i> Password <span class="required">*</span>
+                </label>
                 <div class="input-group">
-                    <span class="icon"><i class="fas fa-lock"></i></span>
-                    <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        placeholder="Enter your password" 
+                        required
+                    >
+                    <button type="button" class="toggle-password" onclick="togglePassword()">
+                        <i class="fas fa-eye" id="eyeIcon"></i>
+                    </button>
                 </div>
             </div>
 
-            <button type="submit" class="btn-submit">Login</button>
+            <button type="submit" class="btn-login">
+                <i class="fas fa-sign-in-alt"></i> Login
+            </button>
         </form>
 
-        <div class="login-link">
-            Don't have an account? <a href="{{ url_for('register') }}">Register here</a>
+        <!-- Register Link -->
+        <div class="auth-footer">
+            <p>Don't have an account? <a href="{{ url_for('register') }}">Register here</a></p>
         </div>
     </div>
 
     <script>
-        // Close alert messages
-        document.querySelectorAll('.alert .close-btn').forEach(btn => {
+        // ===== TOGGLE PASSWORD VISIBILITY =====
+        function togglePassword() {
+            var passwordInput = document.getElementById('password');
+            var eyeIcon = document.getElementById('eyeIcon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.className = 'fas fa-eye-slash';
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.className = 'fas fa-eye';
+            }
+        }
+
+        // ===== CLOSE ALERT MESSAGES =====
+        document.querySelectorAll('.alert .close-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 this.parentElement.remove();
             });
         });
 
-        // Auto-dismiss success messages
-        setTimeout(() => {
-            document.querySelectorAll('.alert-success').forEach(alert => {
-                setTimeout(() => {
+        // ===== AUTO-DISMISS SUCCESS MESSAGES =====
+        setTimeout(function() {
+            document.querySelectorAll('.alert-success').forEach(function(alert) {
+                setTimeout(function() {
                     alert.style.opacity = '0';
                     alert.style.transition = 'opacity 0.5s';
-                    setTimeout(() => alert.remove(), 500);
+                    setTimeout(function() { alert.remove(); }, 500);
                 }, 3000);
             });
         }, 1000);

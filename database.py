@@ -1,6 +1,5 @@
 import sqlite3
 import os
-from datetime import datetime
 
 # Database path
 DB_PATH = 'instance/examguard.db'
@@ -10,13 +9,12 @@ def get_db_connection():
     # Ensure instance folder exists
     os.makedirs('instance', exist_ok=True)
     
-    # Create connection
     conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row  # This allows accessing columns by name
+    conn.row_factory = sqlite3.Row  # Access columns by name
     return conn
 
-def create_tables():
-    """Create all database tables"""
+def init_db():
+    """Initialize database tables if they don't exist"""
     conn = get_db_connection()
     cursor = conn.cursor()
     
@@ -43,37 +41,8 @@ def create_tables():
             FOREIGN KEY (candidate_id) REFERENCES candidate(candidate_id)
         )
     ''')
-
-def update_session_table():
-    conn = get_db_connection()
-    cursor = conn.cursor()
     
-    # Check if table exists, create if not
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS session (
-            session_id INTEGER PRIMARY KEY AUTOINCREMENT,
-            candidate_id INTEGER NOT NULL,
-            start_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            end_time TIMESTAMP,
-            status TEXT DEFAULT 'active',
-            FOREIGN KEY (candidate_id) REFERENCES candidate(candidate_id)
-        )
-    ''')
-    
-    conn.commit()
-    conn.close()
-    print("✅ Session table ready")
-    
-    conn.commit()
-    conn.close()
-    print("✅ Database tables created successfully!")
-    print(f"📁 Database file: {DB_PATH}")
-
-def create_event_log_table():
-    """Create event_log table for tracking exam events"""
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
+    # Create Event Log Table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS event_log (
             event_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -96,25 +65,4 @@ def create_event_log_table():
     
     conn.commit()
     conn.close()
-    print("✅ Event Log table created successfully!")
-
-def test_connection():
-    """Test database connection"""
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute("SELECT sqlite_version()")
-        version = cursor.fetchone()[0]
-        conn.close()
-        print(f"✅ SQLite version: {version}")
-        print("✅ Database connection successful!")
-        return True
-    except Exception as e:
-        print(f"❌ Database connection failed: {e}")
-        return False
-
-if __name__ == '__main__':
-    print("🚀 Initializing ExamGuard Database...")
-    test_connection()
-    create_tables()
-    print("🎉 Database setup complete!")
+    print("✅ Database tables initialized successfully!")

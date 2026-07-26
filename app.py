@@ -31,20 +31,38 @@ def validate_password(password):
         return False, "Password must contain at least one number"
     return True, "Password is strong"
 
+import base64
+import os
+from datetime import datetime
+
 def save_photo(photo_data, candidate_id):
     """Save base64 photo data to file and return path"""
     try:
-        # Create photos directory if it doesn't exist
+        # Create photos directory
         photos_dir = os.path.join('static', 'photos')
         os.makedirs(photos_dir, exist_ok=True)
+        
+        # Debug: Print photo data info
+        print(f"📸 Photo data length: {len(photo_data) if photo_data else 0}")
+        
+        if not photo_data:
+            print("❌ No photo data received")
+            return None
         
         # Remove the data URL prefix if present
         if 'base64' in photo_data:
             if ',' in photo_data:
                 photo_data = photo_data.split(',')[1]
+            else:
+                print("❌ Invalid photo data format")
+                return None
         
         # Decode base64 data
-        image_data = base64.b64decode(photo_data)
+        try:
+            image_data = base64.b64decode(photo_data)
+        except Exception as e:
+            print(f"❌ Failed to decode base64: {e}")
+            return None
         
         # Generate unique filename
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -55,11 +73,13 @@ def save_photo(photo_data, candidate_id):
         with open(filepath, 'wb') as f:
             f.write(image_data)
         
+        print(f"✅ Photo saved: {filepath}")
+        
         # Return relative path for database
         return f"static/photos/{filename}"
         
     except Exception as e:
-        print(f"Error saving photo: {e}")
+        print(f"❌ Error saving photo: {e}")
         return None
 
 # ===== SESSION MANAGEMENT FUNCTIONS =====
@@ -209,7 +229,11 @@ def register():
         confirm_password = request.form.get('confirm_password', '')
         terms = request.form.get('terms', '')
         photo_data = request.form.get('photo_data', '')
-        
+        print(f"📸 Photo data received: {len(photo_data) if photo_data else 0} characters")
+        if photo_data:
+            print(f"📸 Photo data starts with: {photo_data[:50]}...")
+        else:
+            print("❌ No photo data received in form")
         # ===== VALIDATION =====
         errors = []
         
@@ -274,17 +298,22 @@ def register():
             candidate_id = cursor.lastrowid
             
             # Save photo and get path
-            photo_path = save_photo(photo_data, candidate_id)
             
-            if photo_path:
-                cursor.execute('''
-                    UPDATE candidate 
-                    SET photo_path = ? 
-                    WHERE candidate_id = ?
-                ''', (photo_path, candidate_id))
-                conn.commit()
-            
-            conn.close()
+            # SAVE PHOTO AFTER INSERT
+            if photo_data:
+                photo_path = save_photo(photo_data, candidate_id)
+                if photo_path:
+                    cursor.execute('''
+                        UPDATE candidate 
+                        SET photo_path = ? 
+                        WHERE candidate_id = ?
+                    ''', (photo_path, candidate_id))
+                    conn.commit()
+                    print(f"✅ Photo saved: {photo_path}")
+                else:
+                    print("❌ Failed to save photo")
+            else:
+                print("❌ No photo data received")
             
             # Auto-login after registration
             session['candidate_id'] = candidate_id
@@ -405,11 +434,13 @@ def dashboard():
         
         conn.close()
         
+        # ✅ FIX: Include photo_path in candidate dictionary
         candidate = {
             'candidate_id': candidate_data['candidate_id'],
             'name': candidate_data['name'],
             'email': candidate_data['email'],
-            'created_at': candidate_data['created_at']
+            'created_at': candidate_data['created_at'],
+            'photo_path': candidate_data['photo_path']  
         }
         
         return render_template('dashboard.html', 
@@ -542,6 +573,21 @@ def exam_page():
         return redirect(url_for('dashboard'))
     
     return render_template('exam.html', 
+                         session_id=session['exam_session_id'],
+                         candidate_id=session['candidate_id'])
+
+@app.route('/browser-monitor')
+def browser_monitor():
+    """Browser Activity Monitoring Page"""
+    if 'candidate_id' not in session:
+        flash('Please login first.', 'warning')
+        return redirect(url_for('login'))
+    
+    if 'exam_session_id' not in session:
+        flash('Please start an exam session first.', 'warning')
+        return redirect(url_for('dashboard'))
+    
+    return render_template('browser_monitor.html', 
                          session_id=session['exam_session_id'],
                          candidate_id=session['candidate_id'])
 

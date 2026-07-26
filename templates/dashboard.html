@@ -1,144 +1,237 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - ExamGuard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-brand">📝 ExamGuard</div>
+        <div class="nav-links">
+            <span>Welcome, {{ candidate.name }}!</span>
+            <a href="{{ url_for('logout') }}" class="logout-btn">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </div>
+    </nav>
+
     <div class="dashboard-container">
-        <!-- Navigation -->
-        <nav class="navbar">
-            <div class="nav-brand">📝 ExamGuard</div>
-            <div class="nav-links">
-                <span>Welcome, {{ candidate.name }}</span>
-                <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
-            </div>
-        </nav>
-
-        <!-- Main Content -->
         <div class="dashboard-content">
-            <!-- Welcome Section -->
-            <div class="welcome-section">
-                <h1>Welcome, {{ candidate.name }}! 👋</h1>
-                <p>You are logged in as {{ candidate.email }}</p>
+
+            <!-- ===== SECTION 1: QUICK STATISTICS ===== -->
+            <div class="quick-stats">
+                <div class="quick-stat total">
+                    <div class="number">{{ total_sessions }}</div>
+                    <div class="label">📊 Total Sessions</div>
+                </div>
+                <div class="quick-stat active">
+                    <div class="number">{{ active_sessions }}</div>
+                    <div class="label">🟢 Active Sessions</div>
+                </div>
+                <div class="quick-stat completed">
+                    <div class="number">{{ completed_sessions }}</div>
+                    <div class="label">✅ Completed</div>
+                </div>
             </div>
 
-            <!-- Session Controls -->
-            <div class="session-controls">
+            <!-- ===== SECTION 2: SESSION CONTROLS ===== -->
+            <div class="session-controls-top">
                 <h2>📝 Exam Session</h2>
-                <div class="session-status">
+
+                <!-- Session Status -->
+                <div class="session-status-bar {% if active_session %}{{ active_session.status }}{% else %}none{% endif %}">
+                    <div class="status-info">
+                        <span class="status-icon">
+                            {% if active_session %}
+                                {% if active_session.status == 'active' %}🟢
+                                {% elif active_session.status == 'paused' %}🟡
+                                {% else %}🔴
+                                {% endif %}
+                            {% else %}
+                                ⏸️
+                            {% endif %}
+                        </span>
+                        <span class="status-text">
+                            {% if active_session %}
+                                Status: <strong>{{ active_session.status|upper }}</strong>
+                                <span class="session-start-time">Started: {{ active_session.start_time }}</span>
+                            {% else %}
+                                No active session
+                            {% endif %}
+                        </span>
+                    </div>
                     {% if active_session %}
-                        <p>Current Status: <span class="status-{{ active_session.status }}">{{ active_session.status }}</span></p>
-                        <p>Started: {{ active_session.start_time }}</p>
-                    {% else %}
-                        <p>No active session. Start your exam below.</p>
+                        <span class="session-time">
+                            <i class="far fa-clock"></i>
+                            {% if active_session.status == 'active' %}
+                                Running
+                            {% elif active_session.status == 'paused' %}
+                                Paused
+                            {% endif %}
+                        </span>
                     {% endif %}
                 </div>
-                <div class="session-buttons">
+
+                <!-- Session Buttons -->
+                <div class="session-buttons-top">
                     {% if not active_session %}
-                        <form method="POST" action="{{ url_for('start_exam') }}" style="display: inline;">
+                        <form method="POST" action="{{ url_for('start_exam') }}">
                             <button type="submit" class="btn-session start">
                                 <i class="fas fa-play"></i> Start Exam
                             </button>
                         </form>
                     {% else %}
                         {% if active_session.status == 'active' %}
-                            <form method="POST" action="{{ url_for('pause_exam') }}" style="display: inline;">
+                            <form method="POST" action="{{ url_for('pause_exam') }}">
                                 <button type="submit" class="btn-session pause">
                                     <i class="fas fa-pause"></i> Pause
                                 </button>
                             </form>
-                            <form method="POST" action="{{ url_for('end_exam') }}" style="display: inline;">
+                            <form method="POST" action="{{ url_for('end_exam') }}">
                                 <button type="submit" class="btn-session end" onclick="return confirm('Are you sure you want to end this exam session?')">
                                     <i class="fas fa-stop"></i> End Exam
                                 </button>
                             </form>
+                            <a href="{{ url_for('exam_page') }}" class="btn-session enter-exam">
+                                <i class="fas fa-door-open"></i> Enter Exam
+                            </a>
                         {% elif active_session.status == 'paused' %}
-                            <form method="POST" action="{{ url_for('resume_exam') }}" style="display: inline;">
+                            <form method="POST" action="{{ url_for('resume_exam') }}">
                                 <button type="submit" class="btn-session resume">
                                     <i class="fas fa-play"></i> Resume
                                 </button>
                             </form>
-                            <form method="POST" action="{{ url_for('end_exam') }}" style="display: inline;">
+                            <form method="POST" action="{{ url_for('end_exam') }}">
                                 <button type="submit" class="btn-session end" onclick="return confirm('Are you sure you want to end this exam session?')">
                                     <i class="fas fa-stop"></i> End Exam
                                 </button>
                             </form>
+                            <a href="{{ url_for('exam_page') }}" class="btn-session enter-exam">
+                                <i class="fas fa-door-open"></i> Enter Exam
+                            </a>
                         {% endif %}
                     {% endif %}
+
+                    <a href="{{ url_for('view_events', candidate_id=candidate.candidate_id) }}" class="btn-session view-events">
+                        <i class="fas fa-list"></i> View Events
+                    </a>
+                    <a href="{{ url_for('browser_monitor') }}" class="btn-session browser-monitor">
+                        <i class="fas fa-globe"></i> Browser Monitor
+                    </a>
                 </div>
             </div>
 
-            <!-- Profile Card -->
-            <div class="profile-card">
-                <h2>Profile Information</h2>
-                <div class="profile-details">
-                    <p><strong>ID:</strong> {{ candidate.candidate_id }}</p>
-                    <p><strong>Name:</strong> {{ candidate.name }}</p>
-                    <p><strong>Email:</strong> {{ candidate.email }}</p>
-                    <p><strong>Member Since:</strong> {{ candidate.created_at }}</p>
-                </div>
+            <!-- ===== SECTION 3: PROFILE & PHOTO ===== -->
+<div class="profile-section">
+    <div class="profile-card">
+        <h3>👤 Profile Information</h3>
+        <div class="detail"><strong>🆔 ID:</strong> {{ candidate.candidate_id }}</div>
+        <div class="detail"><strong>👤 Name:</strong> {{ candidate.name }}</div>
+        <div class="detail"><strong>📧 Email:</strong> {{ candidate.email }}</div>
+        <div class="detail"><strong>📅 Registered:</strong> {{ candidate.created_at }}</div>
+    </div>
+    <div class="profile-card">
+        <h3>📸 Photo Status</h3>
+        <div class="detail">
+            <strong>Photo:</strong>
+        {% if candidate.photo_path %}
+            <span class="photo-status captured">✅ Captured</span>
+            <div class="photo-preview">
+                <img src="{{ url_for('static', filename=candidate.photo_path.replace('static/', '')) }}" 
+                     alt="Profile Photo" 
+                     class="profile-photo"
+                     onerror="this.alt='❌ Image not found'; this.style.display='none'; document.getElementById('photoError').style.display='block';">
+                <span id="photoError" style="display: none; color: #e74c3c; font-size: 14px;">
+                    ❌ Image file not found. Please re-upload your photo.
+                </span>
             </div>
-
-            <!-- Statistics Cards -->
-<div class="stats-grid">
-    <div class="stat-card">
-        <div class="stat-icon">📊</div>
-        <div class="stat-number">{{ total_sessions|default(0) }}</div>
-        <div class="stat-label">Total Sessions</div>
-    </div>
-    <div class="stat-card active">
-        <div class="stat-icon">🟢</div>
-        <div class="stat-number">{{ active_sessions|default(0) }}</div>
-        <div class="stat-label">Active Sessions</div>
-    </div>
-    <div class="stat-card completed">
-        <div class="stat-icon">✅</div>
-        <div class="stat-number">{{ completed_sessions|default(0) }}</div>
-        <div class="stat-label">Completed</div>
-    </div>
-</div>
-
-            <!-- Session History Section -->
-<div class="session-history">
-    <h2>📋 Session History</h2>
-    {% if sessions and sessions|length > 0 %}
-        <table>
-            <thead>
-                <tr>
-                    <th>Session ID</th>
-                    <th>Start Time</th>
-                    <th>End Time</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for sess in sessions %}
-                <tr>
-                    <td>#{{ sess.session_id }}</td>
-                    <td>{{ sess.start_time }}</td>
-                    <td>{{ sess.end_time or 'In Progress' }}</td>
-                    <td>
-                        <span class="status-{{ sess.status }}">
-                            {{ sess.status }}
-                        </span>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <p class="no-sessions">📭 No sessions found. Start your first exam!</p>
-    {% endif %}
-</div>
-
-            <!-- Quick Actions -->
-            <div class="quick-actions">
-                <a href="#" class="action-btn primary">🖥️ Start New Exam</a>
-                <a href="#" class="action-btn secondary">📄 View Reports</a>
-                <a href="#" class="action-btn secondary">⚙️ Profile Settings</a>
-            </div>
+            <span class="photo-path">{{ candidate.photo_path }}</span>
+        {% else %}
+            <span class="photo-status not-captured">❌ Not captured</span>
+            <span class="photo-hint">Please update your profile photo during registration.</span>
+        {% endif %}
         </div>
     </div>
+</div>
+            
+            <!-- ===== SECTION 4: SESSION HISTORY ===== -->
+            <div class="session-history">
+                <h3>📋 Session History</h3>
+                {% if sessions and sessions|length > 0 %}
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Session ID</th>
+                                <th>Start Time</th>
+                                <th>End Time</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sess in sessions %}
+                            <tr>
+                                <td>#{{ sess.session_id }}</td>
+                                <td>{{ sess.start_time }}</td>
+                                <td>{{ sess.end_time or 'In Progress' }}</td>
+                                <td>
+                                    <span class="status-{{ sess.status }}">
+                                        {% if sess.status == 'active' %}🟢 Active
+                                        {% elif sess.status == 'paused' %}🟡 Paused
+                                        {% elif sess.status == 'completed' %}✅ Completed
+                                        {% else %}⚪ {{ sess.status }}
+                                        {% endif %}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <div class="no-sessions">
+                        📭 No sessions found. Start your first exam!
+                    </div>
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // ===== AUTO-DISMISS FLASH MESSAGES =====
+        setTimeout(function() {
+            document.querySelectorAll('.alert-success').forEach(function(alert) {
+                alert.style.opacity = '0';
+                alert.style.transition = 'opacity 0.5s';
+                setTimeout(function() { alert.remove(); }, 500);
+            });
+        }, 3000);
+
+        // ===== CONFIRM END EXAM =====
+        document.querySelectorAll('.btn-session.end').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                if (!confirm('⚠️ Are you sure you want to end this exam session? This action cannot be undone!')) {
+                    e.preventDefault();
+                }
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+        var photoPath = "{{ candidate.photo_path }}";
+        console.log("📸 Photo Path from database:", photoPath);
+        
+        if (photoPath) {
+            var img = document.querySelector('.profile-photo');
+            if (img) {
+                var fullPath = "/" + photoPath;
+                console.log("📸 Full image path:", fullPath);
+                img.src = fullPath;
+            }
+        }
+    });
+    </script>
 </body>
 </html>

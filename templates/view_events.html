@@ -6,176 +6,16 @@
     <title>Event Log - ExamGuard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        .container {
-            max-width: 1000px;
-            margin: 40px auto;
-            padding: 30px;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .header h1 {
-            color: #333;
-        }
-
-        .event-summary {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 15px;
-            margin-bottom: 30px;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-        }
-
-        .stat-card {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        }
-
-        .stat-number {
-            font-size: 36px;
-            font-weight: bold;
-            color: #667eea;
-        }
-
-        .stat-label {
-            color: #888;
-            font-size: 14px;
-        }
-
-        .event-types {
-            margin-bottom: 30px;
-        }
-
-        .event-types table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .event-types th {
-            background: #f8f9fa;
-            padding: 12px;
-            text-align: left;
-            font-weight: 600;
-            color: #555;
-        }
-
-        .event-types td {
-            padding: 12px;
-            border-bottom: 1px solid #eee;
-        }
-
-        .event-type {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-
-        .event-type.exam_started { background: #d4edda; color: #155724; }
-        .event-type.exam_paused { background: #fff3cd; color: #856404; }
-        .event-type.exam_resumed { background: #d4edda; color: #155724; }
-        .event-type.exam_submitted { background: #cce5ff; color: #004085; }
-        .event-type.tab_switched { background: #ffe5d0; color: #e67e22; }
-        .event-type.focus_lost { background: #d6eaf8; color: #3498db; }
-        .event-type.copy_attempted { background: #f8d7da; color: #e74c3c; }
-        .event-type.paste_attempted { background: #f8d7da; color: #e74c3c; }
-        .event-type.right_click_detected { background: #e8daef; color: #9b59b6; }
-        .event-type.face_not_detected { background: #f8d7da; color: #e74c3c; }
-        .event-type.suspicious_activity { background: #f8d7da; color: #e74c3c; }
-
-        .all-events {
-            margin-top: 30px;
-        }
-
-        .event-list-full {
-            max-height: 500px;
-            overflow-y: auto;
-            border: 1px solid #eee;
-            border-radius: 10px;
-        }
-
-        .event-item {
-            padding: 12px 20px;
-            border-bottom: 1px solid #f0f0f0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .event-item:hover {
-            background: #f8f9fa;
-        }
-
-        .event-item .event-time {
-            color: #888;
-            font-size: 13px;
-        }
-
-        .event-item .event-type-label {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .event-item .event-remarks {
-            color: #555;
-            font-size: 14px;
-            flex: 1;
-        }
-
-        .back-link {
-            text-align: center;
-            margin-top: 30px;
-        }
-
-        .back-link a {
-            color: #667eea;
-            text-decoration: none;
-            font-weight: 600;
-            padding: 10px 30px;
-            border: 2px solid #667eea;
-            border-radius: 10px;
-            transition: all 0.3s ease;
-        }
-
-        .back-link a:hover {
-            background: #667eea;
-            color: white;
-        }
-
-        .no-events {
-            text-align: center;
-            color: #888;
-            padding: 40px;
-        }
-    </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
+    <div class="events-container">
+        <!-- Header -->
+        <div class="events-header">
             <h1>📋 Event Log</h1>
             <p>All events recorded during your exam sessions</p>
         </div>
 
+        <!-- Event Summary -->
         <div class="event-summary">
             <h3>📊 Event Summary</h3>
             <div class="stats-grid">
@@ -190,6 +30,7 @@
             </div>
         </div>
 
+        <!-- Event Statistics -->
         <div class="event-types">
             <h3>📈 Event Statistics</h3>
             {% if stats and stats|length > 0 %}
@@ -214,10 +55,11 @@
                     </tbody>
                 </table>
             {% else %}
-                <p style="color: #888; text-align: center;">No event statistics available.</p>
+                <p class="no-data">No event statistics available.</p>
             {% endif %}
         </div>
 
+        <!-- All Events -->
         <div class="all-events">
             <h3>📝 All Events</h3>
             <div class="event-list-full">
@@ -231,14 +73,15 @@
                     {% endfor %}
                 {% else %}
                     <div class="no-events">
-                        <i class="fas fa-inbox" style="font-size: 48px; color: #ddd;"></i>
+                        <i class="fas fa-inbox"></i>
                         <p>No events recorded yet.</p>
-                        <p style="font-size: 14px;">Start an exam session to begin tracking events.</p>
+                        <p class="sub-text">Start an exam session to begin tracking events.</p>
                     </div>
                 {% endif %}
             </div>
         </div>
 
+        <!-- Back Link -->
         <div class="back-link">
             <a href="{{ url_for('dashboard') }}">← Back to Dashboard</a>
         </div>
